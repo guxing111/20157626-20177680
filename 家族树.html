@@ -1,0 +1,601 @@
+﻿<html>
+
+<head>
+
+    <meta charset="utf-8">
+
+    <title>学术家族树</title>
+
+    <style>
+
+        .node circle {
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+        }
+
+
+
+        .node {
+            font: 12px sans-serif;
+            stroke: steelblue;
+        }
+
+
+
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2.5px;
+        }
+    </style>
+
+</head>
+
+
+
+<body>
+
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+
+    <label>师生信息：</label>
+
+    <textarea cols="50" rows="10" id="text"></textarea>
+
+    <input type="submit" value="确定" name="submit" onclick="GetTextAreaValue()" />
+
+
+
+
+
+    <script>
+
+        d3.select("body").style("background-image", "url(https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1571756972&di=bdf0695f47523fcf88d876b50fa53608&imgtype=jpg&er=1&src=http%3A%2F%2Fpic1.16pic.com%2F00%2F39%2F66%2F16pic_3966891_b.jpg)");
+
+        function GetTextAreaValue() {
+
+            var str = document.all.text.value;
+
+            //alert(str);
+
+            /* var str= 导师：张三
+
+        2016级博士生：天一、王二、吴五
+
+        2015级硕士生：李四、王五、许六
+
+        2016级硕士生：刘一、李二、李三
+
+        2017级本科生：刘六、琪七、司四
+
+        2018级博士生：老张、妃妃
+
+        2020级本科生：A、B、C
+
+
+
+        导师：老张
+
+        2025级本科生：a、b、c
+
+        2026级硕士生：x、y、z
+
+
+
+        导师：zp
+
+        2005级博士生：张三`;*/
+
+            arrstr = str.split('\n');
+
+            var next = new Map;
+
+            var level = new Map;
+
+            var f = new Map;
+
+            var x = ["博士生", "硕士生", "本科生"];
+
+            var map = new Map();
+
+            var vi = [];
+
+            map["导师"] = 4;
+
+            map["博士生"] = 3;
+
+            map["硕士生"] = 2;
+
+            map["本科生"] = 1;
+
+            //	console.log(map["导师"]);
+
+            //	console.log(map["博士生"]);
+
+            for (var i = 0; i < arrstr.length;) {
+
+                var j;
+
+                for (j = i; j < arrstr.length; j++) {
+
+                    if (arrstr[j] == "") {
+
+                        break;
+
+                    }
+
+                }
+
+                var item = arrstr[i].split('：');
+
+                var tp = item[1];
+
+                next[tp] = [];
+
+                level[tp] = item[0];
+
+                //	console.log(tp);
+
+                vi.push(tp);
+
+                for (var l = i + 1; l < j; l++) {
+
+                    for (var val of x) {
+
+                        //console.log(val);
+
+                        if (arrstr[l].indexOf(val) != -1) {
+
+                            var item1 = arrstr[l].split('：');
+
+                            var z = item1[0] + tp;
+
+                            // console.log(z);
+
+                            next[tp].push(z);
+
+                            level[z] = val;
+
+                            next[z] = [];
+
+                            f[z] = 1;
+
+                            vi.push(z);
+
+                            break;
+
+                        }
+
+                    }
+
+
+
+                    var s = item1[1].split('、');
+
+                    for (var val of s) {
+
+                        console.log(val);
+
+
+
+                        next[z].push(val);
+
+                        f[val] = 1;
+
+                        level[val] = item1[0];
+
+                        vi.push(val);
+
+
+
+
+
+
+
+                    }
+
+                }
+
+                i = j + 1;
+
+
+
+            }
+
+            for (var val of vi) {
+
+
+
+                if (f[val] == null) {
+
+                    //	console.log(val);
+
+                    var root = dfs(val, -1);
+
+                    //console.log(root);
+
+                }
+
+            }
+
+            function dfs(u, fa) {
+
+                var ss;
+
+                ss = {};
+
+                ss.name = u;
+
+                ss.children = [];
+
+                var v = next[u];
+
+                if (v == null) {
+
+                    return ss;
+
+                }
+
+                for (var i = 0; i < v.length; i++) {
+
+                    ss.children.push(dfs(v[i], u));
+
+                }
+
+                if (u.indexOf(fa) != -1) {
+
+                    var t = u.substring(0, u.indexOf(fa));
+
+                    ss.name = t;
+
+                }
+
+                return ss;
+
+            }
+
+            var svg;
+
+            d3.selectAll("svg").remove();
+
+            var margin = { top: 50, right: 20, bottom: 20, left: 20 },
+
+                width = 2300 - margin.right - margin.left,
+
+                height = 2300 - margin.top - margin.bottom;
+
+            s
+
+
+
+
+
+            var i = 0,
+
+                duration = 750;//过渡延迟时间
+
+
+
+
+
+            var tree = d3.layout.tree()//创建一个树布局
+
+                .size([height, width]);
+
+
+
+            var diagonal = d3.svg.diagonal()
+
+                .projection(function (d) { return [d.x, d.y]; });//创建新的斜线生成器
+
+
+
+
+
+            // Setup zoom and pan
+
+            var zoom = d3.behavior.zoom()
+
+                .scaleExtent([.1, 1])
+
+                .on('zoom', function () {
+
+                    svg.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+
+                });
+
+
+
+            //声明与定义画布属性
+
+            svg = d3.select("body").append("svg")
+
+                .attr("width", width + margin.right + margin.left)
+
+                .attr("height", height + margin.top + margin.bottom)
+
+                .call(zoom)
+
+                .append("g")
+
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+
+
+            //treeData为上边定义的节点属性
+
+            root.x0 = height / 2;
+
+            root.y0 = 0;
+
+
+
+            update(root);
+
+
+
+            d3.select(self.frameElement).style("height", "1600px");
+
+
+
+            function update(source) {
+
+
+
+                // Compute the new tree layout.计算新树图的布局
+
+                var nodes = tree.nodes(root).reverse(),
+
+                    links = tree.links(nodes);
+
+
+
+                // Normalize for fixed-depth.设置y坐标点，每层占250px
+
+                nodes.forEach(function (d) { d.y = d.depth * 250; });
+
+
+
+                // Update the nodes…每个node对应一个group
+
+                var node = svg.selectAll("g.node")
+
+                    .data(nodes, function (d) { return d.id || (d.id = ++i); });//data()：绑定一个数组到选择集上，数组的各项值分别与选择集的各元素绑定
+
+
+
+                // Enter any new nodes at the parent's previous position.新增节点数据集，设置位置
+
+                var nodeEnter = node.enter().append("g")  //在 svg 中添加一个g，g是 svg 中的一个属性，是 group 的意思，它表示一组什么东西，如一组 lines ， rects ，circles 其实坐标轴就是由这些东西构成的。
+
+                    .attr("class", "node") //attr设置html属性，style设置css属性
+
+                    .attr("transform", function (d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+
+                    .on("click", click);
+
+
+
+                //添加连接点---此处设置的是圆圈过渡时候的效果（颜色）
+
+                // nodeEnter.append("circle")
+
+                //   .attr("r", 1e-6)
+
+                //   .style("fill", function(d) { return d._children ? "lightsteelblue" : "#357CAE"; });//d 代表数据，也就是与某元素绑定的数据。
+
+                nodeEnter.append("rect")
+
+                    .attr("x", -20)
+
+                    .attr("y", -15)       //结点位置
+
+                    .attr("width", 50)      //矩形宽高
+
+                    .attr("height", 50)
+
+                    .attr("rx", 10)
+
+                    .attr("fill", function (d) {
+
+                        //创建人物图片
+
+                        var defs = svg.append("defs").attr("id", "imgdefs")
+
+
+
+                        var catpattern = defs.append("pattern")
+
+                            .attr("id", "pat")
+
+                            .attr("height", 1)
+
+                            .attr("width", 1)
+
+                            .attr("patternContentUnits", "objectBoundingBox")
+
+
+
+                        catpattern.append("image")
+
+                            .attr("width", "1.4")
+
+                            .attr("height", "1")
+
+                            .attr("xlink:href", "http://img.mp.sohu.com/upload/20170612/817b54ced4694d61b7fc1b0111c75450_th.png")
+
+
+
+                        return "url(#pat)";
+
+
+
+                    })
+
+                //  .style("fill", "#dff0e7");d 代表数据，也就是与某元素绑定的数据。// 小方块的背景颜色绿色现在已经替换为图片
+
+
+
+                nodeEnter.append("text")
+
+                    .attr("x", function (d) { return d.children || d._children ? 13 : 13; })
+
+                    .attr("dy", "50")
+
+                    .attr("text-anchor", "middle")
+
+                    .text(function (d) { return d.name; })
+
+                    .style("fill", "#2dbb8a")
+
+                    .style("fill-opacity", 1);
+
+                // Transition nodes to their new position.将节点过渡到一个新的位置-----主要是针对节点过渡过程中的过渡效果
+
+                //node就是保留的数据集，为原来数据的图形添加过渡动画。首先是整个组的位置
+
+                var nodeUpdate = node.transition()  //开始一个动画过渡
+
+                    .duration(duration)  //过渡延迟时间,此处主要设置的是圆圈节点随斜线的过渡延迟
+
+                    .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });//YES
+
+
+
+
+
+                // Transition exiting nodes to the parent's new position.过渡现有的节点到父母的新位置。
+
+                //最后处理消失的数据，添加消失动画
+
+                var nodeExit = node.exit().transition()
+
+                    .duration(duration)
+
+                    .attr("transform", function (d) { return "translate(" + source.x + "," + source.y + ")"; })//YES
+
+                    .remove();
+
+
+
+                // Update the links…线操作相关
+
+
+
+                //再处理连线集合
+
+                var link = svg.selectAll("path.link")
+
+                    .data(links, function (d) { return d.target.id; });
+
+
+
+
+
+                // Enter any new links at the parent's previous position.
+
+                //添加新的连线
+
+                link.enter().insert("path", "g")
+
+                    .attr("class", "link")
+
+                    .attr("d", function (d) {
+
+                        var o = { y: source.x0, x: source.y0 };//YES
+
+                        return diagonal({ source: o, target: o });  //diagonal - 生成一个二维贝塞尔连接器, 用于节点连接图.
+
+                    })
+
+                    .attr('marker-end', 'url(#arrow)');
+
+
+
+                // Transition links to their new position.将斜线过渡到新的位置
+
+                //保留的连线添加过渡动画
+
+                link.transition()
+
+                    .duration(duration)
+
+                    .attr("d", diagonal);
+
+
+
+                // Transition exiting nodes to the parent's new position.过渡现有的斜线到父母的新位置。
+
+                //消失的连线添加过渡动画
+
+                link.exit().transition()
+
+                    .duration(duration)
+
+                    .attr("d", function (d) {
+
+                        var o = { x: source.x, y: source.y };//NO
+
+                        return diagonal({ source: o, target: o });
+
+                    })
+
+                    .remove();
+
+
+
+                // Stash the old positions for transition.将旧的斜线过渡效果隐藏
+
+                nodes.forEach(function (d) {
+
+                    d.x0 = d.y;
+
+                    d.y0 = d.x;
+
+                });
+
+            }
+
+
+
+            //定义一个将某节点折叠的函数
+
+            // Toggle children on click.切换子节点事件
+
+            function click(d) {
+
+                if (d.children) {
+
+                    d._children = d.children;
+
+                    d.children = null;
+
+                } else {
+
+                    d.children = d._children;
+
+                    d._children = null;
+
+                }
+
+                update(d);
+
+            }
+
+        }
+
+
+
+
+
+
+
+    </script>
+
+
+
+</body>
+
+</html>
